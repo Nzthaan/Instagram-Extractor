@@ -1,0 +1,42 @@
+async function getFollowers() {
+    let followersList = new Set();
+    let lastHeight = 0;
+
+    function scrollDown() {
+        let dialog = document.querySelector('div[role="dialog"]');
+        if (dialog) {
+            dialog.scrollTop = dialog.scrollHeight;
+        }
+    }
+
+    function extractUsernames() {
+        document.querySelectorAll('div[role="dialog"] a[href*="/"]').forEach(el => {
+            let username = el.textContent.trim();
+            if (username) {
+                followersList.add(username);
+            }
+        });
+    }
+
+    while (true) {
+        extractUsernames();
+        scrollDown();
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        let newHeight = document.querySelector('div[role="dialog"]')?.scrollHeight || 0;
+        if (newHeight === lastHeight) break;
+        lastHeight = newHeight;
+    }
+
+    let textContent = [...followersList].join("\n");
+    let blob = new Blob([textContent], { type: "text/plain" });
+    let link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+    link.download = "followers_list.txt";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+getFollowers();
